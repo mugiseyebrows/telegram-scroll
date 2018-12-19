@@ -51,13 +51,13 @@
 					]
 				},
 				'button.prev' : {
-					text: '🡄'
+					text: '◀'
 				},
 				'button.scroll': {
-					text: '🡅'
+					text: '▲'
 				},
 				'button.next': {
-					text: '🡆'
+					text: '▶'
 				},
 				'button.stop': {
 					text: '■'
