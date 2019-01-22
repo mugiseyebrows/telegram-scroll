@@ -1,6 +1,73 @@
 
 !function() {
-	
+
+	function simulate(element, eventName)
+	{
+
+		function extend(destination, source) {
+			for (let property in source)
+			destination[property] = source[property];
+			return destination;
+		}
+
+		let eventMatchers = {
+			'HTMLEvents': /^(?:load|unload|abort|error|select|change|submit|reset|focus|blur|resize|scroll)$/,
+			'MouseEvents': /^(?:click|dblclick|mouse(?:down|up|over|move|out))$/
+		};
+
+		let defaultOptions = {
+			pointerX: 0,
+			pointerY: 0,
+			button: 0,
+			ctrlKey: false,
+			altKey: false,
+			shiftKey: false,
+			metaKey: false,
+			bubbles: true,
+			cancelable: true
+		};
+
+		let options = extend(defaultOptions, arguments[2] || {});
+		let oEvent, eventType = null;
+
+		for (let name in eventMatchers)
+		{
+			if (eventMatchers[name].test(eventName)) { eventType = name; break; }
+		}
+
+		if (!eventType)
+			throw new SyntaxError('Only HTMLEvents and MouseEvents interfaces are supported');
+
+		if (document.createEvent)
+		{
+			oEvent = document.createEvent(eventType);
+			if (eventType == 'HTMLEvents')
+			{
+				oEvent.initEvent(eventName, options.bubbles, options.cancelable);
+			}
+			else
+			{
+				oEvent.initMouseEvent(eventName, options.bubbles, options.cancelable, document.defaultView,
+				options.button, options.pointerX, options.pointerY, options.pointerX, options.pointerY,
+				options.ctrlKey, options.altKey, options.shiftKey, options.metaKey, options.button, element);
+			}
+			element.dispatchEvent(oEvent);
+		}
+		else
+		{
+			options.clientX = options.pointerX;
+			options.clientY = options.pointerY;
+			let evt = document.createEventObject();
+			oEvent = extend(evt, options);
+			element.fireEvent('on' + eventName, oEvent);
+		}
+		return element;
+	}
+
+	function randomItem(items) {
+		return items[Math.floor(Math.random() * items.length)];
+	}
+
 	function createUi(ui, parent) {
 		
 		for(let k in ui) {
@@ -19,7 +86,7 @@
 			}
 			if (n === 'select') {
 				item.options.forEach(option => {
-					var op = document.createElement('option'); 
+					let op = document.createElement('option'); 
 					op.value = option.value;
 					op.innerText = option.text;
 					e.appendChild(op);
@@ -42,7 +109,6 @@
 			children: {
 				'select.delay' : {
 					options: [
-						{value: 0.5, text: '0.5s'},
 						{value: 1, text: '1s'},
 						{value: 2, text: '2s'},
 						{value: 3, text: '3s'},
@@ -61,6 +127,9 @@
 				},
 				'button.stop': {
 					text: '■'
+				},
+				'button.rand': {
+					text: 'R'
 				}
 			}
 		}
@@ -101,6 +170,7 @@
 		prev: () => setClickInterval('.modal_prev_wrap'),
 		next: () => setClickInterval('.modal_next_wrap'),
 		scroll: () => setScrollInterval('.im_history_scrollable_wrap'),
+		rand: () => simulate(randomItem(document.querySelectorAll('.im_dialog')),"mousedown"),
 		stop: () => {
 			clearInterval(interval);
 			interval = null;
@@ -112,7 +182,7 @@
 		if (target.tagName !== 'BUTTON') {
 			return;	
 		}
-		for(var key in handlers) {
+		for(let key in handlers) {
 			if (target.classList.contains(key)) {
 				handlers[key]();
 				e.preventDefault();
